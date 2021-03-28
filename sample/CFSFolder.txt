@@ -1,0 +1,59 @@
+HRESULT STDMETHODCALLTYPE CNSEFolderViewCB::MessageSFVCB(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	/* ... */
+	if(uMsg == 15){ //SFVM_WINDOWCREATED
+		BOOL reqInitButton = FALSE;
+		this->pTryHarderHookInfo = VFAddRefTryHarderHook(this->shview, &VFTryHarderCallback, this, &reqInitButton);
+		if (pTryHarderHookInfo && reqInitButton) {
+			//create 2 buttons (sample)
+			//must allocate memory using 'CoTaskMemAlloc'
+			//memory will free inside if footer was destroyed.
+			PXTRYHARDERBUTTONINFO* buttons = (PXTRYHARDERBUTTONINFO*)CoTaskMemAlloc(sizeof(PXTRYHARDERBUTTONINFO) * 2); //2 buttons
+			if (buttons) {
+				DWORD len = 0;
+				PXTRYHARDERBUTTONINFO btn1 = (PXTRYHARDERBUTTONINFO)CoTaskMemAlloc(sizeof(XTRYHARDERBUTTONINFO));
+				btn1->iconIndex = 0;
+				btn1->menuIdx = 0; //first menuid
+				len = wcslen(L"Test1") + 1;
+				//button label
+				btn1->pDisplayName = (LPWSTR)CoTaskMemAlloc(sizeof(WCHAR) * len);
+				wcscpy_s(btn1->pDisplayName, len, L"Test1");
+				//tooltip message
+				btn1->pTooltipName = (LPWSTR)CoTaskMemAlloc(sizeof(WCHAR) * len);
+				wcscpy_s(btn1->pTooltipName, len, L"Test1");
+
+				buttons[0] = btn1;
+				PXTRYHARDERBUTTONINFO btn2 = (PXTRYHARDERBUTTONINFO)CoTaskMemAlloc(sizeof(XTRYHARDERBUTTONINFO));
+				btn2->iconIndex = 1;
+				btn2->menuIdx = 1; //second menuid
+				len = wcslen(L"Test2") + 1;
+				//button label
+				btn2->pDisplayName = (LPWSTR)CoTaskMemAlloc(sizeof(WCHAR) * len);
+				wcscpy_s(btn2->pDisplayName, len, L"Test2");
+				//tooltip message
+				btn2->pTooltipName = (LPWSTR)CoTaskMemAlloc(sizeof(WCHAR) * len);
+				wcscpy_s(btn2->pTooltipName, len, L"Test2");
+
+				buttons[1] = btn2;
+
+				VFSetTryHarderButtons(pTryHarderHookInfo,buttons , 2 , L"Intro Text (not work yet)");
+			}
+		}
+	}
+	else if(uMsg == 16){ //SFVM_WINDOWDESTROYED
+		if (this->pTryHarderHookInfo) {
+			VFReleaseTryHarderHook(this->pTryHarderHookInfo);
+			this->pTryHarderHookInfo = NULL;
+		}
+	}
+	/* ... */
+}
+
+//menuId is button id
+BOOL __stdcall VFTryHarderCallback(DWORD menuId, PVOID userData) {
+	//if (userData) {
+	//	CNSEFolderViewCB* csf = (CNSEFolderViewCB*)userData;
+	//	csf->sf-> ....;
+	//}
+	MessageBoxW(NULL, L"Button Clicked", L"NSE", 0);
+	return TRUE;
+}
